@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zumo Robot Control</title>
+</head>
+<body>
+    <center>
+    <form action="/forward" method="POST">
+        <input type="submit" value="Forward" style="height:120px; width:120px" />
+    </form>
+    <table><tr>
+        <td><form action="/left" method="POST">
+            <input type="submit" value="Left" style="height:120px; width:120px" />
+        </form></td>
+        <td><form action="/stop" method="POST">
+            <input type="submit" value="Stop" style="height:120px; width:120px" />
+        </form></td>
+        <td><form action="/right" method="POST">
+            <input type="submit" value="Right" style="height:120px; width:120px" />
+        </form></td>
+    </tr></table>
+    <form action="/back" method="POST">
+        <input type="submit" value="Back" style="height:120px; width:120px" />
+    </form>
+    </center>
+</body>
+</html>

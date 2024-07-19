@@ -1,5 +1,8 @@
+from flask import Flask, render_template
 import RPi.GPIO as GPIO
 import time
+
+control_app = Flask(__name__)
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
@@ -46,15 +49,36 @@ def motor_right():
     GPIO.output(m2b, GPIO.LOW)
 
 
-motor_forward()
-time.sleep(2)
-motor_backward()
-time.sleep(2)
-motor_left()
-time.sleep(2)
-motor_right()
-time.sleep(2)
-motor_stop()
+
+@control_app.route('/')
+def index():
+    return render_template('index.html')
 
 
+@control_app.route('/forward')
+def forward():
+    motor_forward()
+    return "Moving Forward"
 
+@control_app.route('/backward')
+def backward():
+    motor_backward()
+    return "Moving Backward"
+
+@control_app.route('/left')
+def left():
+    motor_left()
+    return "Turning left"
+
+@control_app.route('/right')
+def right():
+    motor_right()
+    return "Turning right"
+
+@control_app.route('/stop')
+def stop():
+    motor_stop()
+    return "Stop"
+
+if __name__ == '__main__':
+    control_app(host = '0.0.0.0', port = 5000)

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Remote control interface</title>
+	</head>
+	
+	<body>
+		<h1>Remote control interface</h1>
+		<button onclick="move('forward')"> Forward </button>
+		<button onclick="move('backward')"> Backward </button>
+		<button onclick="move('left')"> Left </button>
+		<button onclick="move('right')"> Right </button>
+		<button onclick="move('stop')"> Stop </button>
+		
+		<script>
+			function move(direction) {
+				fetch('/' + direction)
+					.then(response => response.text())
+					.then(data => console.log(data));	
+			}		
+		</script>
+	</body>
+</html>

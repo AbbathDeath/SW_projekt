@@ -1,65 +1,96 @@
-from flask import Flask, render_template
-from gpiozero import Motor
+import lgpio
 import time
 
-control_app = Flask(__name__)
+# Open GPIO chip
+h = lgpio.gpiochip_open(0)
 
-motor1 = Motor(forward=23, backward=24)  
-motor2 = Motor(forward=27, backward=22)  
+# Define GPIO pins (BCM numbering)
+m1a = 23  # BCM GPIO 23
+m1b = 24  # BCM GPIO 24
+m2a = 27  # BCM GPIO 27
+m2b = 22  # BCM GPIO 22
 
+# Setup pins as outputs
+lgpio.gpio_claim_output(h, m1a)
+lgpio.gpio_claim_output(h, m1b)
+lgpio.gpio_claim_output(h, m2a)
+lgpio.gpio_claim_output(h, m2b)
+
+# Initialize all pins to LOW
+lgpio.gpio_write(h, m1a, 0)
+lgpio.gpio_write(h, m1b, 0)
+lgpio.gpio_write(h, m2a, 0)
+lgpio.gpio_write(h, m2b, 0)
+
+# Motor control functions
 def motor_forward():
-    motor1.forward()
-    motor2.forward()
+    print("Moving Forward")
+    lgpio.gpio_write(h, m1a, 1)
+    lgpio.gpio_write(h, m1b, 0)
+    lgpio.gpio_write(h, m2a, 1)
+    lgpio.gpio_write(h, m2b, 0)
 
 def motor_stop():
-    motor1.stop()
-    motor2.stop()
+    print("Stopping")
+    lgpio.gpio_write(h, m1a, 0)
+    lgpio.gpio_write(h, m1b, 0)
+    lgpio.gpio_write(h, m2a, 0)
+    lgpio.gpio_write(h, m2b, 0)
 
 def motor_backward():
-    motor1.backward()
-    motor2.backward()
+    print("Moving Backward")
+    lgpio.gpio_write(h, m1a, 0)
+    lgpio.gpio_write(h, m1b, 1)
+    lgpio.gpio_write(h, m2a, 0)
+    lgpio.gpio_write(h, m2b, 1)
 
 def motor_left():
-    motor1.forward()
-    motor2.backward()
+    print("Turning Left")
+    lgpio.gpio_write(h, m1a, 1)
+    lgpio.gpio_write(h, m1b, 0)
+    lgpio.gpio_write(h, m2a, 0)
+    lgpio.gpio_write(h, m2b, 1)
 
 def motor_right():
-    motor1.backward()
-    motor2.forward()
+    print("Turning Right")
+    lgpio.gpio_write(h, m1a, 0)
+    lgpio.gpio_write(h, m1b, 1)
+    lgpio.gpio_write(h, m2a, 1)
+    lgpio.gpio_write(h, m2b, 0)
 
-
-@control_app.route('/')
-def index():
-    return render_template('index.html')
-
-@control_app.route('/forward')
-def forward():
+try:
+    # Simple test sequence
+    print("Starting motor test sequence...")
+    
     motor_forward()
-    return "Moving Forward"
-
-@control_app.route('/backward')
-def backward():
-    motor_backward()
-    return "Moving Backward"
-
-@control_app.route('/left')
-def left():
-    motor_left()
-    return "Turning left"
-
-@control_app.route('/right')
-def right():
-    motor_right()
-    return "Turning right"
-
-@control_app.route('/stop')
-def stop():
+    time.sleep(2)
+    
     motor_stop()
-    return "Stop"
+    time.sleep(1)
+    
+    motor_backward()
+    time.sleep(2)
+    
+    motor_stop()
+    time.sleep(1)
+    
+    motor_left()
+    time.sleep(2)
+    
+    motor_stop()
+    time.sleep(1)
+    
+    motor_right()
+    time.sleep(2)
+    
+    motor_stop()
+    
+    print("Test sequence completed!")
 
-if __name__ == '__main__':
-    try:
-        control_app.run(host='0.0.0.0', port=5000)
-    finally:
-        motor1.stop()
-        motor2.stop()
+except KeyboardInterrupt:
+    print("\nProgram stopped by user")
+finally:
+    # Clean up
+    motor_stop()
+    lgpio.gpiochip_close(h)
+    print("GPIO resources released")

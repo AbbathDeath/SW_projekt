@@ -7,10 +7,10 @@ control_app = Flask(__name__)
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 
-m1a = 31 #bialy32
-m1b = 32 #zolty31
-m2a = 35 #zielony36
-m2b = 36 #fielotowy35
+m1a = 23 #bialy23
+m1b = 24 #zolty24
+m2a = 27 #zielony27
+m2b = 22 #fielotowy22
 
 
 GPIO.setup(m1a, GPIO.OUT)

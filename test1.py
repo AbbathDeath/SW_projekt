@@ -1,59 +1,36 @@
 from flask import Flask, render_template
-import RPi.GPIO as GPIO
+from gpiozero import Motor
 import time
 
 control_app = Flask(__name__)
 
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)
-
-m1a = 23 #bialy23
-m1b = 24 #zolty24
-m2a = 27 #zielony27
-m2b = 22 #fielotowy22
-
-
-GPIO.setup(m1a, GPIO.OUT)
-GPIO.setup(m1b, GPIO.OUT)
-GPIO.setup(m2a, GPIO.OUT)
-GPIO.setup(m2b, GPIO.OUT)
+motor1 = Motor(forward=23, backward=24)  
+motor2 = Motor(forward=27, backward=22)  
 
 def motor_forward():
-    GPIO.output(m1a, GPIO.HIGH)
-    GPIO.output(m1b, GPIO.LOW)
-    GPIO.output(m2a, GPIO.HIGH)
-    GPIO.output(m2b, GPIO.LOW)
+    motor1.forward()
+    motor2.forward()
 
 def motor_stop():
-    GPIO.output(m1a, GPIO.LOW)
-    GPIO.output(m1b, GPIO.LOW)
-    GPIO.output(m2a, GPIO.LOW)
-    GPIO.output(m2b, GPIO.LOW)
+    motor1.stop()
+    motor2.stop()
 
 def motor_backward():
-    GPIO.output(m1a, GPIO.LOW)
-    GPIO.output(m1b, GPIO.HIGH)
-    GPIO.output(m2a, GPIO.LOW)
-    GPIO.output(m2b, GPIO.HIGH)
+    motor1.backward()
+    motor2.backward()
 
 def motor_left():
-    GPIO.output(m1a, GPIO.HIGH)
-    GPIO.output(m1b, GPIO.LOW)
-    GPIO.output(m2a, GPIO.LOW)
-    GPIO.output(m2b, GPIO.HIGH)
+    motor1.forward()
+    motor2.backward()
 
 def motor_right():
-    GPIO.output(m1a, GPIO.LOW)
-    GPIO.output(m1b, GPIO.HIGH)
-    GPIO.output(m2a, GPIO.HIGH)
-    GPIO.output(m2b, GPIO.LOW)
-
+    motor1.backward()
+    motor2.forward()
 
 
 @control_app.route('/')
 def index():
     return render_template('index.html')
-
 
 @control_app.route('/forward')
 def forward():
@@ -81,4 +58,8 @@ def stop():
     return "Stop"
 
 if __name__ == '__main__':
-    control_app(host = '0.0.0.0', port = 5000)
+    try:
+        control_app.run(host='0.0.0.0', port=5000)
+    finally:
+        motor1.stop()
+        motor2.stop()

@@ -1,18 +1,18 @@
 import curses
-from gpiozero import Motor, PWMOutputDevice
-
+from gpiozero import Motor
 
 class Vehicle:
     def __init__(self):
         self.left_motor = Motor(forward=27, backward=22)
-	self.right_motor = Motor(forward=23, backward=24)
+        self.right_motor = Motor(forward=23, backward=24)
+     
     def forward(self):
         self.left_motor.forward()
-	self.right.motor.forward()
-
+        self.right.motor.forward()
+     
     def backward(self):
         self.left_motor.backward()
-	self.righ_motor.backward()
+        self.righ_motor.backward()
 
     def map_key_to_command(self, key):
         map = {

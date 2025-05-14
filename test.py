@@ -10,12 +10,22 @@ class Vehicle:
         self.right_speed_correction = 1.0  
         
         self.base_speed = 0.5 
+
+        self.cumulative_error = 0.0  # Накопленная ошибка
+        self.correction_step = 0.01   # Шаг коррекции (подбирается)
     def set_motors(self, left_speed, right_speed):
         self.left_motor.value = left_speed * self.left_speed_correction
         self.right_motor.value = right_speed * self.right_speed_correction
 
     def forward(self):
-        self.set_motors(self.base_speed, self.base_speed)
+        left_speed = self.base_speed - self.cumulative_error
+        right_speed = self.base_speed + self.cumulative_error
+        left_speed = max(0.2, min(0.8, left_speed))
+        right_speed = max(0.2, min(0.8, right_speed))
+        
+        self.set_motors(left_speed, right_speed)
+        
+        self.cumulative_error += 0.001  
 
     def backward(self):
         self.set_motors(-self.base_speed, -self.base_speed)
@@ -35,10 +45,7 @@ class Vehicle:
             curses.KEY_UP: self.forward,
             curses.KEY_DOWN: self.backward,
             curses.KEY_LEFT: self.left,
-            curses.KEY_RIGHT: self.right,
-            ord('+'): self.increase_speed,
-            ord('='): self.increase_speed,
-            ord('-'): self.decrease_speed
+            curses.KEY_RIGHT: self.right
         }.get(key)
 
     def control(self, key):

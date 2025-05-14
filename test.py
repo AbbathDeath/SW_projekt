@@ -1,23 +1,40 @@
 import curses
-from gpiozero import Motor
+from gpiozero import Motor, PWMOutputDevice
 
 class Vehicle:
     def __init__(self):
-        self.left_motor = Motor(forward=27, backward=22)
-        self.right_motor = Motor(forward=23, backward=24)
-     
+        self.left_motor = Motor(forward=12, backward=13)
+        self.right_motor = Motor(forward=18, backward=19)
+       # self.right_pwm = PWMOutputDevice(23)
+       # self.right_pwm.value = 0
+       # self.left_pwm = PWMOutputDevice(27)
+       # self.left_pwm.value = 0
+        
+
     def forward(self):
         self.left_motor.forward()
-        self.right.motor.forward()
-     
+        self.right_motor.forward()
+       # self.left_pwm.value = 0.5
+       # self.right_pwm.value = 0.5
+
     def backward(self):
-        self.left_motor.backward()
-        self.righ_motor.backward()
+       self.left_motor.backward()
+       self.right_motor.backward()
+
+    def left(self):
+        self.right_motor.forward()
+       # self.right_pwm.value = 0.5
+    def right(self):
+        self.left_motor.forward()
+       # self.left_pwm.value = 0.5
+
 
     def map_key_to_command(self, key):
         map = {
             curses.KEY_UP: self.forward,
-            curses.KEY_DOWN: self.backward
+            curses.KEY_DOWN: self.backward,
+            curses.KEY_LEFT: self.left,
+            curses.KEY_RIGHT: self.right
         }
         return map[key]
 
@@ -50,6 +67,7 @@ def main(window):
                 next_key = window.getch()
             # KEY RELEASED
             rpi_vehicle.left_motor.stop()
+            rpi_vehicle.right_motor.stop()
 
 
 curses.wrapper(main)

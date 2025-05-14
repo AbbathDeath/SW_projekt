@@ -4,33 +4,31 @@ from time import sleep
 
 class Vehicle:
     def __init__(self):
-        self.left_motor = Motor(forward=13, backward=12, pwm=True)
-        self.right_motor = Motor(forward=19, backward=18, pwm=True)
-        self.speed = 0.5  # Начальная скорость (0-1)
+        self.left_motor = Motor(forward=12, backward=13, pwm=True)
+        self.right_motor = Motor(forward=18, backward=19, pwm=True)
+        self.left_speed_correction = 1.0   
+        self.right_speed_correction = 1.0  
         
+        self.base_speed = 0.5 
+    def set_motors(self, left_speed, right_speed):
+        self.left_motor.value = left_speed * self.left_speed_correction
+        self.right_motor.value = right_speed * self.right_speed_correction
+
     def forward(self):
-        self.left_motor.forward(self.speed)
-        self.right_motor.forward(self.speed)
+        self.set_motors(self.base_speed, self.base_speed)
 
     def backward(self):
-        self.left_motor.backward(self.speed)
-        self.right_motor.backward(self.speed)
+        self.set_motors(-self.base_speed, -self.base_speed)
 
     def left(self):
-        self.right_motor.forward(self.speed)
-        self.left_motor.backward(self.speed*0.3)
+        self.set_motors(-self.base_speed*0.3, self.base_speed)
 
     def right(self):
-        self.left_motor.forward(self.speed)
-        self.right_motor.backward(self.speed*0.3)
+        self.set_motors(self.base_speed, -self.base_speed*0.3)
 
-    def increase_speed(self):
-        self.speed = min(1.0, round(self.speed + 0.1, 1))
-        print(f"Speed increased to: {self.speed}")
-
-    def decrease_speed(self):
-        self.speed = max(0.1, round(self.speed - 0.1, 1))
-        print(f"Speed decreased to: {self.speed}")
+    def stop(self):
+        self.left_motor.stop()
+        self.right_motor.stop(
 
     def map_key_to_command(self, key):
         return {

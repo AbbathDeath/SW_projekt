@@ -4,8 +4,8 @@ from time import sleep
 
 class Vehicle:
     def __init__(self):
-        self.left_motor = Motor(forward=12, backward=13, pwm=True)
-        self.right_motor = Motor(forward=18, backward=19, pwm=True)
+        self.left_motor = Motor(forward=13, backward=12, pwm=True)
+        self.right_motor = Motor(forward=19, backward=18, pwm=True)
         self.speed = 0.5  # Начальная скорость (0-1)
         
     def forward(self):

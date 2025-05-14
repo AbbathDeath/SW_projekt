@@ -1,6 +1,6 @@
 import curses
 import time
-import inputs  # Для геймпада
+import math
 from gpiozero import Motor
 
 class Vehicle:
@@ -8,81 +8,49 @@ class Vehicle:
         self.left_motor = Motor(forward=12, backward=13, pwm=True)
         self.right_motor = Motor(forward=18, backward=19, pwm=True)
         
-        # Настройки калибровки
-        self.base_speed = 0.5
-        self.cumulative_error = 0.0  # Накопленная ошибка увода
-        self.correction_step = 0.01  # Шаг коррекции (подбирается)
-        self.last_correction_time = time.time()
-        
-        # Для геймпада
-        self.gamepad_connected = False
-        try:
-            self.gamepad = inputs.devices.gamepads[0]
-            self.gamepad_connected = True
-        except:
-            print("Геймпад не найден, используется клавиатура")
+        # Настройки плавности
+        self.base_speed = 0.5  # Базовая скорость (0-1)
+        self.max_steering = 0.8  # Максимальный угол поворота
+        self.steering_smoothness = 0.2  # Коэф. плавности (0.1-0.5)
+        self.last_steering = 0  # Для плавного изменения
 
     def set_motors(self, left_speed, right_speed):
-        """Установка скорости с ограничением"""
-        self.left_motor.value = max(-1, min(1, left_speed))
-        self.right_motor.value = max(-1, min(1, right_speed))
-
-    def forward(self):
-        # Автокоррекция увода
-        time_elapsed = time.time() - self.last_correction_time
-        if time_elapsed > 1.0:  # Корректируем каждую секунду
-            self.cumulative_error += self.correction_step * time_elapsed
-            self.last_correction_time = time.time()
+        """Установка скорости с плавным изменением"""
+        # Плавный переход от текущей скорости к целевой
+        current_left = self.left_motor.value
+        current_right = self.right_motor.value
         
-        left_speed = self.base_speed - self.cumulative_error
-        right_speed = self.base_speed + self.cumulative_error
+        smooth_left = current_left + (left_speed - current_left) * self.steering_smoothness
+        smooth_right = current_right + (right_speed - current_right) * self.steering_smoothness
+        
+        self.left_motor.value = max(-1, min(1, smooth_left))
+        self.right_motor.value = max(-1, min(1, smooth_right))
+
+    def forward(self, steering=0):
+        """Движение вперед с плавным поворотом"""
+        # Ограничиваем steering [-1, 1] и применяем квадратичную кривую
+        steering = max(-1, min(1, steering))
+        steering = math.copysign(steering ** 2, steering)  # Квадратичное смягчение
+        
+        # Рассчитываем скорости для каждого мотора
+        left_speed = self.base_speed * (1 - steering)
+        right_speed = self.base_speed * (1 + steering)
+        
         self.set_motors(left_speed, right_speed)
 
     def backward(self):
         self.set_motors(-self.base_speed, -self.base_speed)
 
-    def left(self):
-        self.set_motors(-self.base_speed*0.3, self.base_speed)
-
-    def right(self):
-        self.set_motors(self.base_speed, -self.base_speed*0.3)
-
     def stop(self):
         self.set_motors(0, 0)
-        self.cumulative_error = 0.0  # Сброс ошибки при остановке
-
-    def get_gamepad_input(self):
-        """Чтение данных с геймпада"""
-        if not self.gamepad_connected:
-            return None
-            
-        try:
-            events = inputs.get_gamepad()
-            for event in events:
-                if event.code == "ABS_Y":  # Левый стик (вперёд/назад)
-                    return ("throttle", (event.state - 32768) / 32768)
-                elif event.code == "ABS_X":  # Левый стик (влево/вправо)
-                    return ("steering", (event.state - 32768) / 32768)
-        except:
-            return None
 
     def map_key_to_command(self, key):
-        """Совмещаем управление клавиатурой и геймпадом"""
-        # Сначала проверяем геймпад
-        gamepad_input = self.get_gamepad_input()
-        if gamepad_input:
-            input_type, value = gamepad_input
-            if input_type == "throttle":
-                return self.forward if value < -0.5 else self.backward if value > 0.5 else self.stop
-            elif input_type == "steering":
-                return self.left if value < -0.3 else self.right if value > 0.3 else None
-        
-        # Если геймпада нет, используем клавиатуру
+        """Обработка клавиш с плавным управлением"""
         return {
-            curses.KEY_UP: self.forward,
+            curses.KEY_UP: lambda: self.forward(0),  # Прямо
             curses.KEY_DOWN: self.backward,
-            curses.KEY_LEFT: self.left,
-            curses.KEY_RIGHT: self.right,
+            curses.KEY_LEFT: lambda: self.forward(-0.5),  # Плавный левый поворот
+            curses.KEY_RIGHT: lambda: self.forward(0.5),  # Плавный правый поворот
             ord(' '): self.stop
         }.get(key)
 

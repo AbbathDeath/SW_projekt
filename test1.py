@@ -1,96 +1,53 @@
-import lgpio
+import inputs
+from gpiozero import Motor
 import time
 
-# Open GPIO chip
-h = lgpio.gpiochip_open(0)
+left_motor = Motor(forward=12, backward=13)
+right_motor = Motor(forward=18, backward=19)
 
-# Define GPIO pins (BCM numbering)
-m1a = 23  # BCM GPIO 23
-m1b = 24  # BCM GPIO 24
-m2a = 27  # BCM GPIO 27
-m2b = 22  # BCM GPIO 22
-
-# Setup pins as outputs
-lgpio.gpio_claim_output(h, m1a)
-lgpio.gpio_claim_output(h, m1b)
-lgpio.gpio_claim_output(h, m2a)
-lgpio.gpio_claim_output(h, m2b)
-
-# Initialize all pins to LOW
-lgpio.gpio_write(h, m1a, 0)
-lgpio.gpio_write(h, m1b, 0)
-lgpio.gpio_write(h, m2a, 0)
-lgpio.gpio_write(h, m2b, 0)
-
-# Motor control functions
-def motor_forward():
-    print("Moving Forward")
-    lgpio.gpio_write(h, m1a, 1)
-    lgpio.gpio_write(h, m1b, 0)
-    lgpio.gpio_write(h, m2a, 1)
-    lgpio.gpio_write(h, m2b, 0)
-
-def motor_stop():
-    print("Stopping")
-    lgpio.gpio_write(h, m1a, 0)
-    lgpio.gpio_write(h, m1b, 0)
-    lgpio.gpio_write(h, m2a, 0)
-    lgpio.gpio_write(h, m2b, 0)
-
-def motor_backward():
-    print("Moving Backward")
-    lgpio.gpio_write(h, m1a, 0)
-    lgpio.gpio_write(h, m1b, 1)
-    lgpio.gpio_write(h, m2a, 0)
-    lgpio.gpio_write(h, m2b, 1)
-
-def motor_left():
-    print("Turning Left")
-    lgpio.gpio_write(h, m1a, 1)
-    lgpio.gpio_write(h, m1b, 0)
-    lgpio.gpio_write(h, m2a, 0)
-    lgpio.gpio_write(h, m2b, 1)
-
-def motor_right():
-    print("Turning Right")
-    lgpio.gpio_write(h, m1a, 0)
-    lgpio.gpio_write(h, m1b, 1)
-    lgpio.gpio_write(h, m2a, 1)
-    lgpio.gpio_write(h, m2b, 0)
+def get_gamepad_input():
+    try:
+        events = inputs.get_gamepad()
+        for event in events:
+            if event.ev_type == "Absolute":
+                if event.code == "ABS_Y":  # Левый стик (вперёд/назад)
+                    throttle = (event.state - 32768) / 32768  # [-1, 1]
+                    return throttle, None
+                elif event.code == "ABS_X":  # Левый стик (влево/вправо)
+                    steering = (event.state - 32768) / 32768  # [-1, 1]
+                    return None, steering
+    except:
+        return None, None
 
 try:
-    # Simple test sequence
-    print("Starting motor test sequence...")
-    
-    motor_forward()
-    time.sleep(2)
-    
-    motor_stop()
-    time.sleep(1)
-    
-    motor_backward()
-    time.sleep(2)
-    
-    motor_stop()
-    time.sleep(1)
-    
-    motor_left()
-    time.sleep(2)
-    
-    motor_stop()
-    time.sleep(1)
-    
-    motor_right()
-    time.sleep(2)
-    
-    motor_stop()
-    
-    print("Test sequence completed!")
+    while True:
+        throttle, steering = get_gamepad_input()
+        
+        if throttle is not None:
+            # Преобразуем throttle в скорость моторов (0...1)
+            speed = abs(throttle) * 0.5  # Ограничиваем скорость
+            
+            if throttle > 0.1:  # Вперёд
+                left_motor.forward(speed)
+                right_motor.forward(speed)
+            elif throttle < -0.1:  # Назад
+                left_motor.backward(speed)
+                right_motor.backward(speed)
+            else:  # Стоп
+                left_motor.stop()
+                right_motor.stop()
+        
+        if steering is not None:
+            # Поворот (чем больше отклонение стика, тем резче поворот)
+            if steering < -0.3:  # Влево
+                left_motor.backward(0.3)
+                right_motor.forward(0.5)
+            elif steering > 0.3:  # Вправо
+                left_motor.forward(0.5)
+                right_motor.backward(0.3)
+        
+        time.sleep(0.01)
 
 except KeyboardInterrupt:
-    print("\nProgram stopped by user")
-finally:
-    # Clean up
-    motor_stop()
-    lgpio.gpiochip_close(h)
-    print("GPIO resources released")
+    left_motor.stop()
+    right_motor.stop()

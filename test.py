@@ -8,6 +8,7 @@ class Vehicle:
         self.right_motor = Motor(forward=18, backward=19, pwm=True)
         self.left_speed_correction = 1.0   
         self.right_speed_correction = 1.0  
+        correction_per_second = 0.03
         
         self.base_speed = 0.5 
     def set_motors(self, left_speed, right_speed):
@@ -15,7 +16,9 @@ class Vehicle:
         self.right_motor.value = right_speed * self.right_speed_correction
 
     def forward(self):
-        self.set_motors(self.base_speed, self.base_speed)
+        left_speed = self.base_speed - (correction_per_second * time_elapsed)
+        self.set_motors(left_speed, self.base_speed)
+
 
     def backward(self):
         self.set_motors(-self.base_speed, -self.base_speed)

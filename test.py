@@ -28,7 +28,7 @@ class Vehicle:
 
     def stop(self):
         self.left_motor.stop()
-        self.right_motor.stop(
+        self.right_motor.stop()
 
     def map_key_to_command(self, key):
         return {
